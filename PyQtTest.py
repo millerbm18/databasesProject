@@ -138,6 +138,11 @@ class DataEntryPage(QWidget):
         self.layout.addWidget(self.content_area)
         self.updateContent(self.options_dropdown.currentIndex())
 
+        # Execute data entry button
+        submit_button = QPushButton("Submit Data")
+        submit_button.clicked.connect(self.enterData)
+        self.layout.addWidget(submit_button)
+
         # Navigation to other page
         button = QPushButton("Go to Query Page")
         button.clicked.connect(parent.navigate_to_query_page)
@@ -147,11 +152,11 @@ class DataEntryPage(QWidget):
 
     def updateContent(self, index):
         # Clear existing content
-        # if self.data_entry_layout:
-        #     for i in reversed(range(self.data_entry_layout.count())):
-        #         widget_to_remove = self.data_entry_layout.itemAt(i).widget()
-        #         self.data_entry_layout.removeWidget(widget_to_remove)
-        #         widget_to_remove.setParent(None)
+        self.input1 = None
+        self.input2 = None
+        self.input3 = None
+        self.input4 = None
+        self.input5 = None
         clearLayout(self.content_layout)
         # Add new content based on the selected option
         # Entering Department
@@ -228,7 +233,28 @@ class DataEntryPage(QWidget):
             self.data_entry_layout2.addWidget(self.input5)
             self.content_layout.addLayout(self.data_entry_layout)
             self.content_layout.addLayout(self.data_entry_layout2)
-
+    def enterData(self):
+        # Extract query parameters from input field
+        query_param = ""
+        if self.input1:
+            query_param = self.input1.text()
+        if self.input2:
+            query_param += " " + self.input2.text()
+        if self.input3:
+            query_param += " " + self.input3.text()
+        if self.input4:
+            query_param += " " + self.input4.text()
+        if self.input5:
+            query_param += " " + self.input5.text()
+        print(query_param)
+        # Perform database query using self.db_connection
+        # For example:
+        # cursor = self.db_connection.cursor()
+        # cursor.execute("SELECT * FROM your_table WHERE condition = ?", (query_param,))
+        # results = cursor.fetchall()
+        # Display results in the results_display widget
+        # This is a placeholder for actual database query handling
+        #self.results_display.setText("Results for query: " + query_param)
 def clearLayout(layout):
     while layout.count():
         item = layout.takeAt(0)
