@@ -45,8 +45,7 @@ class QueryPage(QWidget):
 
         self.layout = QVBoxLayout()
         self.data_entry_layout = None
-        self.input1 = None
-        self.input2 = None
+
         # Query input field
         self.query_input_layout = QHBoxLayout()
         self.query_input_layout.addWidget(QLabel("Search by:"))
@@ -101,7 +100,8 @@ class QueryPage(QWidget):
                 widget_to_remove = self.data_entry_layout.itemAt(i).widget()
                 self.data_entry_layout.removeWidget(widget_to_remove)
                 widget_to_remove.setParent(None)
-
+        self.input1 = None
+        self.input2 = None
         # Add new content based on the selected option
         if index == 2:  # Option 1
             self.data_entry_layout = QHBoxLayout()
