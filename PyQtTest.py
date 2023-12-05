@@ -54,8 +54,6 @@ class QueryPage(QWidget):
         self.query_dropdown.currentIndexChanged.connect(self.updateContent)
         self.query_input_layout.addWidget(self.query_dropdown)
         self.layout.addWidget(QLabel("Enter Query Parameters:"))
-        # self.query_input = QLineEdit(self)
-        # self.query_input_layout.addWidget(self.query_input)
         self.layout.addLayout(self.query_input_layout)
         self.updateContent(self.query_dropdown.currentIndex())
         # Execute query button
@@ -103,14 +101,15 @@ class QueryPage(QWidget):
         self.input1 = None
         self.input2 = None
         # Add new content based on the selected option
-        if index == 2:  # Option 1
+        # 2 input fields for Semester + Program
+        if index == 2:
             self.data_entry_layout = QHBoxLayout()
             self.input1 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input1)
             self.input2 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input2)
             self.query_input_layout.addLayout(self.data_entry_layout)
-        else:  # Option 2
+        else:  # One input for everything else
             self.data_entry_layout = QHBoxLayout()
             self.input1 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input1)
@@ -233,6 +232,7 @@ class DataEntryPage(QWidget):
             self.data_entry_layout2.addWidget(self.input5)
             self.content_layout.addLayout(self.data_entry_layout)
             self.content_layout.addLayout(self.data_entry_layout2)
+
     def enterData(self):
         # Extract query parameters from input field
         query_param = ""
@@ -255,6 +255,7 @@ class DataEntryPage(QWidget):
         # Display results in the results_display widget
         # This is a placeholder for actual database query handling
         #self.results_display.setText("Results for query: " + query_param)
+        
 def clearLayout(layout):
     while layout.count():
         item = layout.takeAt(0)
@@ -272,4 +273,3 @@ if __name__ == "__main__":
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
-#%%
