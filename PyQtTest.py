@@ -82,6 +82,7 @@ class QueryPage(QWidget):
             query_param = self.input1.text()
         if self.input2:
             query_param += " " + self.input2.text()
+        query_param+= self.query_dropdown.currentText()
         # Perform database query using self.db_connection
         # For example:
         # cursor = self.db_connection.cursor()
@@ -255,7 +256,7 @@ class DataEntryPage(QWidget):
         # Display results in the results_display widget
         # This is a placeholder for actual database query handling
         #self.results_display.setText("Results for query: " + query_param)
-        
+
 def clearLayout(layout):
     while layout.count():
         item = layout.takeAt(0)
