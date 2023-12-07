@@ -3,6 +3,13 @@ from PyQt5.QtGui import QFont
 import sys
 import pymysql as mysql
 
+conn = mysql.connect(
+    host="127.0.0.1",
+    port=3306,
+    user="cs5330",
+    password="cs5330",
+    database="dbprog"
+)
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -25,13 +32,13 @@ class MainWindow(QMainWindow):
     def setupDatabaseConnection(self):
         self.conn = None  # Database connection
         # Establish a connection to your database here
-        # self.conn = mysql.connect(
-        #     host="127.0.0.1",
-        #     port=3306,
-        #     user="cs5330",
-        #     password="cs5330",
-        #     database="dbprog"
-        # )
+        self.conn = mysql.connect(
+            host="127.0.0.1",
+            port=3306,
+            user="cs5330",
+            password="cs5330",
+            database="dbprog"
+        )
 
     def navigate_to_query_page(self):
         self.stacked_widget.setCurrentWidget(self.query_page)
@@ -77,21 +84,28 @@ class QueryPage(QWidget):
     def executeQuery(self):
         # Extract query parameters from input field
 
-        query_param = ""
-        if self.input1:
+        if self.query_dropdown.currentIndex() == 0:
             query_param = self.input1.text()
-        if self.input2:
-            query_param += " " + self.input2.text()
-        query_param+= self.query_dropdown.currentText()
-        # Perform database query using self.db_connection
-        # For example:
-        # cursor = self.db_connection.cursor()
-        # cursor.execute("SELECT * FROM your_table WHERE condition = ?", (query_param,))
-        # results = cursor.fetchall()
-        # Display results in the results_display widget
-        # This is a placeholder for actual database query handling
-        self.results_display.setText("Results for query: " + query_param)
+            print(query_param)
+            query = self.departmentQuery(query_param)
 
+        self.results_display.setText("Results for query: " + query)
+
+    def departmentQuery(input):
+        return(f"""SELECT 
+                        D.DepartmentName, 
+                        P.ProgramName, 
+                        F.FacultyName, 
+                        F.FacultyRank
+                    FROM 
+                        Department D
+                    LEFT JOIN 
+                        Program P ON D.DepartmentCode = P.DepartmentCode
+                    LEFT JOIN 
+                        Faculty F ON D.DepartmentCode = F.DepartmentCode
+                    WHERE 
+                        D.DepartmentCode = {input};
+                    """)
     def updateContent(self, index):
         # Clear existing content
         if self.data_entry_layout:
@@ -121,12 +135,12 @@ class DataEntryPage(QWidget):
         super().__init__(parent)
 
         self.layout = QVBoxLayout()
-
+        self.subobjective_layouts =[]
         # Initialize data entry area
         self.data_dropdown_layout = QHBoxLayout()
         self.data_dropdown_layout.addWidget(QLabel("Entering:"))
         self.options_dropdown = QComboBox(self)
-        self.options_dropdown.addItems(["Department", "Faculty", "Programs", "Courses", "Sections", "Sub-Objectives"])
+        self.options_dropdown.addItems(["Department", "Faculty", "Programs", "Courses", "Sections", "Objectives"])
         self.options_dropdown.currentIndexChanged.connect(self.updateContent)
         self.data_dropdown_layout.addWidget(self.options_dropdown)
         self.layout.addLayout(self.data_dropdown_layout)
@@ -137,7 +151,8 @@ class DataEntryPage(QWidget):
         self.content_layout = QVBoxLayout(self.content_area)
         self.layout.addWidget(self.content_area)
         self.updateContent(self.options_dropdown.currentIndex())
-
+        self.entry_success = QLabel("Entry Successful!")
+        self.layout.addWidget(self.entry_success)
         # Execute data entry button
         submit_button = QPushButton("Submit Data")
         submit_button.clicked.connect(self.enterData)
@@ -157,6 +172,8 @@ class DataEntryPage(QWidget):
         self.input3 = None
         self.input4 = None
         self.input5 = None
+        self.subobjectives = []
+        self.subobjective_desc = []
         clearLayout(self.content_layout)
         # Add new content based on the selected option
         # Entering Department
@@ -178,13 +195,16 @@ class DataEntryPage(QWidget):
             self.data_entry_layout.addWidget(QLabel("ID:"))
             self.input2 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("Dept.:"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
             self.data_entry_layout2 = QHBoxLayout()
             self.data_entry_layout2.addWidget(QLabel("E-mail:"))
-            self.input3 = QLineEdit(self)
-            self.data_entry_layout2.addWidget(self.input3)
-            self.data_entry_layout2.addWidget(QLabel("Rank:"))
             self.input4 = QLineEdit(self)
             self.data_entry_layout2.addWidget(self.input4)
+            self.data_entry_layout2.addWidget(QLabel("Rank:"))
+            self.input5 = QLineEdit(self)
+            self.data_entry_layout2.addWidget(self.input5)
             self.content_layout.addLayout(self.data_entry_layout)
             self.content_layout.addLayout(self.data_entry_layout2)
         # Entering Programs
@@ -193,9 +213,12 @@ class DataEntryPage(QWidget):
             self.data_entry_layout.addWidget(QLabel("Program Name:"))
             self.input1 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input1)
-            self.data_entry_layout.addWidget(QLabel("Program Head:"))
+            self.data_entry_layout.addWidget(QLabel("Dept.:"))
             self.input2 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("Program Head ID:"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
             self.content_layout.addLayout(self.data_entry_layout)
         # Entering Courses
         if index == 3:
@@ -221,33 +244,154 @@ class DataEntryPage(QWidget):
             self.data_entry_layout.addWidget(QLabel("Section Code:"))
             self.input2 = QLineEdit(self)
             self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("No. Students:"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
             self.data_entry_layout2 = QHBoxLayout()
             self.data_entry_layout2.addWidget(QLabel("Section Semester:"))
-            self.input3 = QLineEdit(self)
-            self.data_entry_layout2.addWidget(self.input3)
-            self.data_entry_layout2.addWidget(QLabel("Section Year:"))
             self.input4 = QLineEdit(self)
             self.data_entry_layout2.addWidget(self.input4)
-            self.data_entry_layout2.addWidget(QLabel("Section Faculty:"))
+            self.data_entry_layout2.addWidget(QLabel("Section Year:"))
             self.input5 = QLineEdit(self)
             self.data_entry_layout2.addWidget(self.input5)
+            self.data_entry_layout2.addWidget(QLabel("Section Faculty:"))
+            self.input6 = QLineEdit(self)
+            self.data_entry_layout2.addWidget(self.input6)
             self.content_layout.addLayout(self.data_entry_layout)
             self.content_layout.addLayout(self.data_entry_layout2)
+        if index == 5:
+            self.data_entry_layout = QHBoxLayout()
+            self.data_entry_layout.addWidget(QLabel("Objective Name:"))
+            self.input1 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input1)
+            self.data_entry_layout.addWidget(QLabel("Objective Description:"))
+            self.input2 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("Program Name:"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
+            self.content_layout.addLayout(self.data_entry_layout)
+            # create button to add subobjectives
+            self.subobjective_button = QPushButton("Add Subobjective")
+            self.subobjective_button.clicked.connect(self.addSubobjective)
+            self.content_layout.addWidget(self.subobjective_button)
+            # create button to remove subobjectives
+            self.remove_subobjective_button = QPushButton("Remove Subobjective")
+            self.remove_subobjective_button.clicked.connect(self.removeSubobjectives)
+            self.content_layout.addWidget(self.remove_subobjective_button)
+
+    def addSubobjective(self):
+        # create new layout for subobjective
+        self.subobjective_layouts.append(QHBoxLayout())
+        # create new input fields for subobjective
+        self.subobjective_layouts[-1].addWidget(QLabel("Subobjective Name:"))
+        self.subobjectives.append(QLineEdit(self))
+        self.subobjective_layouts[-1].addWidget(self.subobjectives[-1])
+        self.subobjective_layouts[-1].addWidget(QLabel("Subobjective Description:"))
+        self.subobjective_desc.append(QLineEdit(self))
+        self.subobjective_layouts[-1].addWidget(self.subobjective_desc[-1])
+        # add subobjective layout to content layout
+        self.content_layout.addLayout(self.subobjective_layouts[-1])
+
+    def removeSubobjectives(self):
+        # remove last subobjective
+        clearLayout(self.subobjective_layouts[-1])
+        self.subobjective_layouts[-1].setParent(None)
+        self.subobjective_layouts.pop()
+
+    def enterDepartment(self, input1, input2):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO Department VALUES (%s, %s);", (input1, input2))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+
+    def enterFaculty(self, name, id, dept, email, rank):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO Faculty VALUES (%s, %s, %s, %s, %s);", (id, name, email, rank, dept))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+
+
+    def enterProgram(self, name, dept, id):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO Program VALUES (%s, %s, %s);", (name, id, dept))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+
+
+    def enterCourse(self, name, code, desc):
+        # get the department code by stripping the last 4 characters from the course code
+        dept = code[:-4]
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO Course VALUES (%s, %s, %s, %s);", (code, name, desc, dept))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+
+    def enterSection(self, course, section, students, semester, year, faculty):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO Section VALUES (%s, %s, %s, %s, %s, %s);", (section, semester, year, course, faculty, students))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+
+    def enterObjective(self, name, desc, program):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO LearningObjective VALUES (%s, %s, %s);", (name, desc, program))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
+            return
+        for i in range(len(self.subobjectives)):
+            sub_name = name + "." + (i+1).__str__()
+            try:
+                cursor.execute("INSERT INTO SubObjective VALUES (%s, %s, %s);", (sub_name, self.subobjectives[i].text(), name))
+                conn.commit()
+                self.entry_success.setText("Entry Successful!")
+            except:
+                self.entry_success.setText("Entry Failed!")
+                return
 
     def enterData(self):
-        # Extract query parameters from input field
-        query_param = ""
-        if self.input1:
-            query_param = self.input1.text()
-        if self.input2:
-            query_param += " " + self.input2.text()
-        if self.input3:
-            query_param += " " + self.input3.text()
-        if self.input4:
-            query_param += " " + self.input4.text()
-        if self.input5:
-            query_param += " " + self.input5.text()
-        print(query_param)
+        # For entering Department
+        if self.options_dropdown.currentIndex() == 0:
+            self.enterDepartment(self.input1.text(), self.input2.text())
+
+        # For entering Faculty
+        elif self.options_dropdown.currentIndex() == 1:
+            self.enterFaculty(self.input1.text(), self.input2.text(), self.input3.text(), self.input4.text(), self.input5.text())
+
+        # For entering Programs
+        elif self.options_dropdown.currentIndex() == 2:
+            self.enterProgram(self.input1.text(), self.input2.text(), self.input3.text())
+
+        # For entering Courses
+        elif self.options_dropdown.currentIndex() == 3:
+            self.enterCourse(self.input1.text(), self.input2.text(), self.input3.text())
+
+        # For entering Sections
+        elif self.options_dropdown.currentIndex() == 4:
+            self.enterSection(self.input1.text(), self.input2.text(), self.input3.text(), self.input4.text(), self.input5.text(), self.input6.text())
+
+        # For entering Objectives
+        elif self.options_dropdown.currentIndex() == 5:
+            self.enterObjective(self.input1.text(), self.input2.text(), self.input3.text())
+
         # Perform database query using self.db_connection
         # For example:
         # cursor = self.db_connection.cursor()
@@ -274,3 +418,5 @@ if __name__ == "__main__":
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
+
+#%%
