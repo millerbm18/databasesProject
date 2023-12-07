@@ -88,11 +88,34 @@ class QueryPage(QWidget):
             query_param = self.input1.text()
             print(query_param)
             query = self.departmentQuery(query_param)
+            results = [result for result in query]
+            # concatinate results into a string
+            results = '\n'.join([str(result) for result in results])
+            self.results_display.setText(results)
+        elif self.query_dropdown.currentIndex() == 1:
+            query_param = self.input1.text()
+            print(query_param)
+            query = self.programQuery(query_param)
+            results = [result for result in query]
+            # concatinate results into a string
+            results = '\n'.join([str(result) for result in results])
+            self.results_display.setText(results)
+        elif self.query_dropdown.currentIndex() == 2:
+            program = self.input1.text()
+            semester= self.input2.text()[:-4]
+            # get year from semester
+            year = semester[-4:]
+            query = self.semesterAndProgramQuery(program, semester, year)
+            results = [result for result in query]
+            # concatinate results into a string
+            results = '\n'.join([str(result) for result in results])
+            self.results_display.setText(results)
 
-        self.results_display.setText("Results for query: " + query)
 
-    def departmentQuery(input):
-        return(f"""SELECT 
+
+    def departmentQuery(self, input):
+        print(input)
+        query = f"""SELECT 
                         D.DepartmentName, 
                         P.ProgramName, 
                         F.FacultyName, 
@@ -104,8 +127,65 @@ class QueryPage(QWidget):
                     LEFT JOIN 
                         Faculty F ON D.DepartmentCode = F.DepartmentCode
                     WHERE 
-                        D.DepartmentCode = {input};
-                    """)
+                        D.DepartmentCode = \'{input}\';
+                    """
+        cursor=conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return results
+
+    def programQuery(self, input):
+        print(input)
+        query = f"""
+        SELECT 
+            LO.ObjectiveCode,
+            LO.ObjectiveDescription
+        FROM 
+            Program P
+        JOIN 
+            LearningObjective LO ON P.ProgramName = LO.ProgramName
+        WHERE 
+            P.ProgramName = \'{input}\';
+        """
+        cursor=conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return results
+
+    def semesterAndProgramQuery(self, input1, input2, input3):
+        query = f"""
+        SELECT 
+         S.Semester, 
+        S.Year, 
+        S.SectionNumber, 
+        C.CourseTitle, 
+        F.FacultyName, 
+        SO.ObjectiveCode, 
+        SO.EvaluationMethod, 
+        COALESCE(SO.NumberOfStudentsMet, 'Information Not Found') as EvaluationResult
+        FROM 
+            Program P
+        JOIN ProgramCourse PC ON P.ProgramName = PC.ProgramName
+        JOIN Course C ON PC.CourseID = C.CourseID
+        JOIN Section S ON C.CourseID = S.CourseID
+        JOIN Faculty F ON S.FacultyID = F.FacultyID
+        LEFT JOIN SectionObjective SO ON S.SectionNumber = SO.SectionNumber 
+        AND S.Semester = SO.Semester 
+        AND S.Year = SO.Year
+        WHERE 
+            P.ProgramName = \'{input1}\' AND 
+            S.Semester = \'{input2}\' AND 
+            S.Year = \'{input3}\'
+        ORDER BY 
+        S.SectionNumber, SO.ObjectiveCode;
+        """
+        cursor=conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return results
+
+
+
     def updateContent(self, index):
         # Clear existing content
         if self.data_entry_layout:
