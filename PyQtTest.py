@@ -220,7 +220,7 @@ class DataEntryPage(QWidget):
         self.data_dropdown_layout = QHBoxLayout()
         self.data_dropdown_layout.addWidget(QLabel("Entering:"))
         self.options_dropdown = QComboBox(self)
-        self.options_dropdown.addItems(["Department", "Faculty", "Programs", "Courses", "Sections", "Objectives"])
+        self.options_dropdown.addItems(["Department", "Faculty", "Programs", "Courses", "Sections", "Objectives", "Assign Course to Program", "Enter Evaluation Results"])
         self.options_dropdown.currentIndexChanged.connect(self.updateContent)
         self.data_dropdown_layout.addWidget(self.options_dropdown)
         self.layout.addLayout(self.data_dropdown_layout)
@@ -360,6 +360,46 @@ class DataEntryPage(QWidget):
             self.remove_subobjective_button.clicked.connect(self.removeSubobjectives)
             self.content_layout.addWidget(self.remove_subobjective_button)
 
+        if index == 6:
+            self.data_entry_layout = QHBoxLayout()
+            self.data_entry_layout.addWidget(QLabel("Program Name:"))
+            self.input1 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input1)
+            self.data_entry_layout.addWidget(QLabel("Course Code:"))
+            self.input2 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("Objective:"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
+            self.content_layout.addLayout(self.data_entry_layout)
+
+        if index == 7:
+            self.data_entry_layout = QHBoxLayout()
+            self.data_entry_layout.addWidget(QLabel("Course Code:"))
+            self.input1 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input1)
+            self.data_entry_layout.addWidget(QLabel("Section:"))
+            self.input2 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input2)
+            self.data_entry_layout.addWidget(QLabel("Year"))
+            self.input3 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input3)
+            self.data_entry_layout.addWidget(QLabel("Semester:"))
+            self.input4 = QLineEdit(self)
+            self.data_entry_layout.addWidget(self.input4)
+            self.data_entry_layout2 = QHBoxLayout()
+            self.data_entry_layout2.addWidget(QLabel("Objective:"))
+            self.input5 = QLineEdit(self)
+            self.data_entry_layout2.addWidget(self.input5)
+            self.data_entry_layout2.addWidget(QLabel("Evaluation Method:"))
+            self.input6 = QLineEdit(self)
+            self.data_entry_layout2.addWidget(self.input6)
+            self.data_entry_layout2.addWidget(QLabel("No. Students Met:"))
+            self.input7 = QLineEdit(self)
+            self.data_entry_layout2.addWidget(self.input7)
+            self.content_layout.addLayout(self.data_entry_layout)
+            self.content_layout.addLayout(self.data_entry_layout2)
+
     def addSubobjective(self):
         # create new layout for subobjective
         self.subobjective_layouts.append(QHBoxLayout())
@@ -446,7 +486,23 @@ class DataEntryPage(QWidget):
             except:
                 self.entry_success.setText("Entry Failed!")
                 return
+    def enterCourseToProgram(self, program, course, objective):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO ProgramCourseObjective VALUES (%s, %s, %s);", (program, course, objective))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
 
+    def enterEvaluationResults(self, course, section, year, semester, objective, method, students):
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO SectionObjective VALUES (%s, %s, %s, %s, %s, %s, %s);", (section, course, semester, year, objective, method, students))
+            conn.commit()
+            self.entry_success.setText("Entry Successful!")
+        except:
+            self.entry_success.setText("Entry Failed!")
     def enterData(self):
         # For entering Department
         if self.options_dropdown.currentIndex() == 0:
@@ -471,6 +527,14 @@ class DataEntryPage(QWidget):
         # For entering Objectives
         elif self.options_dropdown.currentIndex() == 5:
             self.enterObjective(self.input1.text(), self.input2.text(), self.input3.text())
+
+        # For entering Course to Program
+        elif self.options_dropdown.currentIndex() == 6:
+            self.enterCourseToProgram(self.input1.text(), self.input2.text(), self.input3.text())
+
+        # For entering Evaluation Results
+        elif self.options_dropdown.currentIndex() == 7:
+            self.enterEvaluationResults(self.input1.text(), self.input2.text(), self.input3.text(), self.input4.text(), self.input5.text(), self.input6.text(), self.input7.text())
 
         # Perform database query using self.db_connection
         # For example:
